@@ -1,0 +1,40 @@
+10
+
+dir
+1120
+svn://220.181.19.210/trunk/BI/adbi_notags/bin/main/java/temporary
+svn://220.181.19.210
+
+
+
+2013-06-04T10:30:21.904361Z
+1120
+wanghuazhong
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+2615235c-7312-411d-adc6-2ceea181e953
+
+statmonitorkey
+dir
+
+stattaobaotag
+dir
+
+statuarate
+dir
+
+updatedb
+dir
+

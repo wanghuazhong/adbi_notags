@@ -1,0 +1,106 @@
+package adbi.mapreduce.commonstat;
+
+import java.io.IOException;
+import java.util.Iterator;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+import util.ConstData;
+import util.HDFSLogWritter;
+
+public class AdCommonStatReducer extends Reducer<Text, LongWritable, Text, Text> {
+	
+	private final String LogAddr = "/user/aalog/ad_bi/log_tmp/AdCommonStatReducer/";
+	private static HDFSLogWritter LOG = null;
+	
+	@Override
+	protected void setup(Context context) throws IOException,
+	InterruptedException{
+		// TODO Auto-generated method stub
+		Configuration conf = context.getConfiguration();
+		LOG = new HDFSLogWritter(LogAddr + "task" + HDFSLogWritter.getFullNumber(context.getTaskAttemptID().getTaskID().getId(), 4)
+				+ "_" + HDFSLogWritter.getFullNumber((int)(System.currentTimeMillis() % 10000), 4)
+				, conf);
+		LOG.info("AdCommonStatReducer setup!");
+	}
+
+	@Override
+	protected void cleanup(Context context) throws IOException,
+	InterruptedException {
+		// TODO Auto-generated method stub
+		LOG.info("AdCommonStatReducer cleanup!");
+		LOG.close();
+	}
+	@Override
+	protected void reduce(Text key,  Iterable<LongWritable> values, Context context) throws IOException, 
+	InterruptedException{
+		// TODO Auto-generated method stub
+		long total = 0l;
+		LongWritable lt;
+		Iterator<LongWritable> iter = values.iterator();
+		while(iter.hasNext()){
+			lt = iter.next();
+			total += lt.get();
+		}
+		
+		String skey = key.toString();
+		String[] tags = skey.split("\\^\\^");
+		String statindex = tags[1];
+		String statdim = tags[2];
+		if(statindex.equalsIgnoreCase(ConstData.ID_VISIT))
+		{
+			if(statdim.equalsIgnoreCase(ConstData.DM_USER))
+			{
+				if(tags.length != 6)
+				{
+					LOG.warn("key not 6 fileds(datatype, statindex, statdim, indexvalue, dimvalue, adtype):" + skey);
+					return;
+				}
+				
+				String datatype = tags[0];
+				String data = tags[1] + "^^" + tags[2] + "^^" + tags[3] + "^^" + tags[4] + "^^" + tags[5];
+				
+				context.write(new Text(data), new Text(datatype + "^^" + String.valueOf(total)));
+			}
+			else if(statdim.equalsIgnoreCase(ConstData.DM_REGION)){
+				if(tags.length != 6){
+					LOG.warn("key not 6 fileds(datatype,statindex,statdim,indexvalue,dimvalue,adtype):" + skey);
+					return;
+				}
+				String datatype = tags[0];
+				String data = tags[1] + "^^" + tags[2] + "^^" + tags[3] + "^^" + tags[4] + "^^" + tags[5];
+				
+				context.write(new Text(data), new Text(datatype + "^^" + String.valueOf(total)));
+			}
+			else
+			{
+				if(tags.length != 7)
+				{
+					LOG.warn("key not 7 fileds(datatype, statindex, statdim, indexvalue, dimvalue, adpos,adtype):" + skey);
+					return;
+				}
+				
+				String datatype = tags[0];
+				String data = tags[1] + "^^" + tags[2] + "^^" + tags[3] + "^^" + tags[4] + "^^" + tags[5] + "^^" + tags[6];
+				
+				context.write(new Text(data), new Text(datatype + "^^" + String.valueOf(total)));
+			}
+		}
+		else if(statindex.equalsIgnoreCase(ConstData.ID_REACH))
+		{
+			if(tags.length != 6)
+			{
+				LOG.warn("key not 6 fileds(datatype, statindex, statdim, indexvalue, dimvalue, adtype):" + skey);
+				return;
+			}
+			
+			String datatype = tags[0];
+			String data = tags[1] + "^^" + tags[2] + "^^" + tags[3] + "^^" + tags[4] + "^^" + tags[5];
+			
+			context.write(new Text(data), new Text(datatype + "^^" + String.valueOf(total)));
+		}
+	}
+}
